@@ -1,0 +1,6 @@
+.git
+.vscode
+.gemini
+docs
+database/*.sql
+*.md
