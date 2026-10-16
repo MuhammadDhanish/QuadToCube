@@ -4,11 +4,21 @@
  * Global Configuration & Helper Utilities
  */
 
+// Detect HTTPS (supports direct SSL, reverse proxies, Cloudflare, AWS, and Vercel)
+$isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off')
+    || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+    || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+    || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_SSL']) === 'on')
+    || (!empty($_SERVER['HTTP_HOST']) && (strpos((string)$_SERVER['HTTP_HOST'], '.vercel.app') !== false || strpos((string)$_SERVER['HTTP_HOST'], '.now.sh') !== false));
+
 // Start session if not already active
 if (session_status() === PHP_SESSION_NONE) {
     // Secure session settings
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
+    if ($isHttps) {
+        ini_set('session.cookie_secure', 1);
+    }
     session_start();
 }
 
@@ -21,7 +31,7 @@ define('APP_INSTITUTION', 'National Institute of Technology & Engineering');
 if (getenv('BASE_URL')) {
     define('BASE_URL', rtrim(getenv('BASE_URL'), '/'));
 } else {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['SERVER_PORT'] ?? 80) == 443) ? "https://" : "http://";
+    $protocol = $isHttps ? "https://" : "http://";
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
     // Strip /public or /api path if running via front controller / serverless bridge
