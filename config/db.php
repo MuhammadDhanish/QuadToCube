@@ -103,10 +103,21 @@ class Database {
             <div class="container" style="max-width: 680px;">
                 <div class="card shadow-lg p-4">
                     <h3 class="text-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Database Connection Notice</h3>
-                    <p class="text-secondary">Could not connect to MySQL server using credentials <code>root@localhost</code>.</p>
+                    <p class="text-secondary">Could not connect to MySQL server.</p>
                     <div class="alert alert-dark border-secondary">
                         <small class="text-warning"><strong>Error Detail:</strong> <?= htmlspecialchars($errorMsg) ?></small>
                     </div>
+                    <?php if (!empty($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], '.vercel.app') !== false): ?>
+                    <h5 class="text-light mt-3">Fix for Vercel:</h5>
+                    <p class="text-secondary small">Vercel requires a cloud MySQL database. In your <strong>Vercel Project &gt; Settings &gt; Environment Variables</strong>, add:</p>
+                    <ul class="text-secondary small ps-3">
+                        <li><code>DB_HOST</code> (e.g. from TiDB Cloud or Aiven)</li>
+                        <li><code>DB_USER</code></li>
+                        <li><code>DB_PASS</code></li>
+                        <li><code>DB_NAME</code></li>
+                        <li><code>DB_PORT</code> (usually <code>4000</code> or <code>3306</code>)</li>
+                    </ul>
+                    <?php else: ?>
                     <h5 class="text-light mt-3">Quick Setup in XAMPP:</h5>
                     <ol class="text-secondary small ps-3">
                         <li>Open <strong>XAMPP Control Panel</strong>.</li>
@@ -115,6 +126,7 @@ class Database {
                         <li>Import <code>database/schema.sql</code> and <code>database/seed.sql</code>, or create a database named <code>crms_db</code>.</li>
                         <li>Refresh this page.</li>
                     </ol>
+                    <?php endif; ?>
                 </div>
             </div>
         </body>

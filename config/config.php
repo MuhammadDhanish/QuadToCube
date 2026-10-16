@@ -11,15 +11,66 @@ $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !
     || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_SSL']) === 'on')
     || (!empty($_SERVER['HTTP_HOST']) && (strpos((string)$_SERVER['HTTP_HOST'], '.vercel.app') !== false || strpos((string)$_SERVER['HTTP_HOST'], '.now.sh') !== false));
 
+// Signed Cookie Session Sync for Serverless Environments (e.g. Vercel)
+define('CRMS_SECRET_KEY', getenv('APP_KEY') ?: 'crms-v1-secret-session-sign-key-2026-nit');
+
+function syncSessionFromCookie(): void {
+    if (!empty($_COOKIE['crms_session_data'])) {
+        $parts = explode('.', (string)$_COOKIE['crms_session_data'], 2);
+        if (count($parts) === 2) {
+            $payload = $parts[0];
+            $signature = $parts[1];
+            $expectedSig = hash_hmac('sha256', $payload, CRMS_SECRET_KEY);
+            if (hash_equals($expectedSig, $signature)) {
+                $decoded = json_decode(base64_decode($payload), true);
+                if (is_array($decoded)) {
+                    foreach ($decoded as $k => $v) {
+                        if (!isset($_SESSION[$k])) {
+                            $_SESSION[$k] = $v;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+function syncSessionToCookie(): void {
+    if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+        $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+            || (!empty($_SERVER['HTTP_HOST']) && (strpos((string)$_SERVER['HTTP_HOST'], '.vercel.app') !== false));
+
+        if (!empty($_SESSION)) {
+            $payload = base64_encode(json_encode($_SESSION));
+            $signature = hash_hmac('sha256', $payload, CRMS_SECRET_KEY);
+            setcookie('crms_session_data', $payload . '.' . $signature, [
+                'expires' => time() + 86400 * 7,
+                'path' => '/',
+                'secure' => $isHttps,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+        } elseif (isset($_COOKIE['crms_session_data'])) {
+            setcookie('crms_session_data', '', [
+                'expires' => time() - 3600,
+                'path' => '/',
+                'secure' => $isHttps,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+        }
+    }
+}
+
 // Start session if not already active
 if (session_status() === PHP_SESSION_NONE) {
-    // Secure session settings
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
-    if ($isHttps) {
-        ini_set('session.cookie_secure', 1);
-    }
     session_start();
+    syncSessionFromCookie();
+    register_shutdown_function('syncSessionToCookie');
 }
 
 // Application Constants

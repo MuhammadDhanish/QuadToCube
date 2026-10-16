@@ -32,7 +32,7 @@ $activeRole = $_GET['role'] ?? 'student';
             </ul>
 
             <div class="card card-modern shadow-sm p-4">
-                <form action="<?= BASE_URL ?>/public/index.php?page=login" method="POST" id="loginForm">
+                <form action="index.php?page=login" method="POST" id="loginForm">
                     <?= csrfField() ?>
                     <input type="hidden" name="role_type" id="role_type_input" value="<?= e($activeRole) ?>">
 

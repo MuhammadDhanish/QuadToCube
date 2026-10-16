@@ -16,7 +16,7 @@ require_once __DIR__ . '/../layouts/header.php';
             </div>
 
             <div class="card card-modern shadow-sm p-4 p-md-5">
-                <form action="<?= BASE_URL ?>/public/index.php?page=register" method="POST" id="registerForm">
+                <form action="index.php?page=register" method="POST" id="registerForm">
                     <?= csrfField() ?>
 
                     <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
