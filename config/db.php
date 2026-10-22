@@ -7,21 +7,42 @@
 class Database {
     private static ?PDO $instance = null;
 
-    // Default configuration for standard XAMPP / MariaDB / MySQL
-    private static string $host = 'localhost';
-    private static string $dbName = 'crms_db';
-    private static string $username = 'root';
+    // Default configuration: Connected to live Aiven MySQL cloud instance
+    private static string $host = 'crms-mysql-dhanishdhanishkk-e099.e.aivencloud.com';
+    private static string $port = '24023';
+    private static string $dbName = 'defaultdb';
+    private static string $username = 'avnadmin';
     private static string $password = '';
     private static string $charset = 'utf8mb4';
 
     public static function getConnection(): PDO {
         if (self::$instance === null) {
-            // Check for environment overrides
-            $host = getenv('DB_HOST') ?: self::$host;
-            $port = getenv('DB_PORT') ?: '3306';
-            $dbName = getenv('DB_NAME') ?: self::$dbName;
-            $username = getenv('DB_USER') ?: self::$username;
-            $password = getenv('DB_PASS') !== false ? getenv('DB_PASS') : self::$password;
+            // Load local .env file if present (safe for local development)
+            $envFile = __DIR__ . '/../.env';
+            if (file_exists($envFile)) {
+                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if ($line === '' || strpos($line, '#') === 0) continue;
+                    $parts = explode('=', $line, 2);
+                    if (count($parts) === 2) {
+                        $k = trim($parts[0]);
+                        $v = trim($parts[1]);
+                        $_ENV[$k] = $v;
+                        $_SERVER[$k] = $v;
+                        putenv("{$k}={$v}");
+                    }
+                }
+            }
+
+            // Check for environment overrides (checks $_ENV, $_SERVER, and getenv)
+            $host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') ?: self::$host;
+            $port = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? getenv('DB_PORT') ?: self::$port;
+            $dbName = $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') ?: self::$dbName;
+            $username = $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER') ?: self::$username;
+            
+            $envPass = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS');
+            $password = ($envPass !== false && $envPass !== null && $envPass !== '') ? $envPass : self::$password;
 
             $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=" . self::$charset;
             $options = [
