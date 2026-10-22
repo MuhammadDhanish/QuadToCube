@@ -80,10 +80,22 @@ class AdminController {
 
         if ($companyId > 0) {
             Company::update($companyId, $data);
+            $targetId = $companyId;
             setFlash('success', 'Company details updated successfully.');
         } else {
-            Company::create($data);
+            $targetId = Company::create($data);
             setFlash('success', 'New recruiting partner company added successfully.');
+        }
+
+        if (!empty($_POST['is_ajax'])) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'company_id' => $targetId,
+                'company_name' => $name,
+                'industry' => $data['industry']
+            ]);
+            exit;
         }
 
         header('Location: ' . BASE_URL . '/public/index.php?page=admin/companies');

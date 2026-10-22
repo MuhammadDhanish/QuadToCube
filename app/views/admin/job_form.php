@@ -40,7 +40,12 @@ $availableCourses = defined('ALL_CRMS_COURSES') ? array_keys(ALL_CRMS_COURSES) :
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label for="company_id" class="form-label fw-semibold">Recruiting Company <span class="text-danger">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="company_id" class="form-label fw-semibold mb-0">Recruiting Company <span class="text-danger">*</span></label>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill shadow-xs" data-bs-toggle="modal" data-bs-target="#quickAddCompanyModal">
+                                    <i class="bi bi-plus-circle me-1"></i>+ Add Company
+                                </button>
+                            </div>
                             <select name="company_id" id="company_id" class="form-select" required>
                                 <option value="">-- Choose Partner Company --</option>
                                 <?php foreach ($companies as $c): ?>
@@ -114,8 +119,16 @@ $availableCourses = defined('ALL_CRMS_COURSES') ? array_keys(ALL_CRMS_COURSES) :
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Eligible Degrees & Branches</label>
-                            <div class="d-flex flex-wrap gap-2 p-3 bg-light rounded-3">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                                <label class="form-label fw-semibold mb-0">Eligible Degrees & Branches</label>
+                                <div class="input-group input-group-sm" style="max-width: 380px;">
+                                    <input type="text" id="newDegreeInput" class="form-control" placeholder="Add custom branch (e.g. B.Tech - AI)">
+                                    <button class="btn btn-outline-primary" type="button" onclick="addNewDegree()">
+                                        <i class="bi bi-plus-lg me-1"></i>Add Degree
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 p-3 bg-light rounded-3" id="degreeCheckboxesContainer">
                                 <div class="form-check me-3">
                                     <input class="form-check-input" type="checkbox" name="allowed_courses[]" value="All" id="course_all"
                                            <?= $isAllCourses ? 'checked' : '' ?> onchange="toggleAllCourses(this)">
@@ -161,6 +174,62 @@ $availableCourses = defined('ALL_CRMS_COURSES') ? array_keys(ALL_CRMS_COURSES) :
     </div>
 </div>
 
+<!-- Quick Add Company Modal -->
+<div class="modal fade" id="quickAddCompanyModal" tabindex="-1" aria-labelledby="quickAddCompanyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold fs-6" id="quickAddCompanyModalLabel">
+                    <i class="bi bi-building-add me-2"></i>Add Recruiting Partner Company
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="quickAddCompanyForm" onsubmit="handleQuickCompanySubmit(event)">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                <input type="hidden" name="is_ajax" value="1">
+                <div class="modal-body p-4">
+                    <div id="companyAlertBox" class="alert d-none py-2 px-3 small"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" name="company_name" id="qc_name" class="form-control" placeholder="e.g. Acme Innovations" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Industry / Domain</label>
+                            <input type="text" name="industry" id="qc_industry" class="form-control" placeholder="e.g. IT Services, AI, Fintech">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Location / HQ</label>
+                            <input type="text" name="location" id="qc_location" class="form-control" placeholder="e.g. Bengaluru / San Francisco">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Website</label>
+                            <input type="url" name="website" id="qc_website" class="form-control" placeholder="https://example.com">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">HR Contact Email</label>
+                            <input type="email" name="contact_email" id="qc_email" class="form-control" placeholder="campus@example.com">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">Short Profile / Description</label>
+                        <textarea name="description" id="qc_desc" class="form-control" rows="2" placeholder="Brief note on recruitment focus..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="qc_submitBtn" class="btn btn-primary btn-sm px-4">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="qc_spinner"></span>
+                        Save Company
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleAllCourses(checkbox) {
     const items = document.querySelectorAll('.course-item');
@@ -173,6 +242,109 @@ function toggleAllCourses(checkbox) {
         }
     });
 }
+
+function addNewDegree() {
+    const input = document.getElementById('newDegreeInput');
+    const degreeName = input.value.trim();
+    if (!degreeName) {
+        input.focus();
+        return;
+    }
+
+    // Uncheck "All" if it was checked
+    const allBox = document.getElementById('course_all');
+    if (allBox && allBox.checked) {
+        allBox.checked = false;
+        toggleAllCourses(allBox);
+    }
+
+    // Check if degree already exists
+    const existing = Array.from(document.querySelectorAll('.course-item')).find(
+        cb => cb.value.toLowerCase() === degreeName.toLowerCase()
+    );
+
+    if (existing) {
+        existing.checked = true;
+        existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        existing.parentElement.classList.add('bg-primary-subtle', 'rounded', 'p-1');
+        setTimeout(() => existing.parentElement.classList.remove('bg-primary-subtle', 'rounded', 'p-1'), 2000);
+        input.value = '';
+        return;
+    }
+
+    // Create new checkbox
+    const container = document.getElementById('degreeCheckboxesContainer');
+    const newId = 'course_custom_' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'form-check me-2';
+    div.innerHTML = `
+        <input class="form-check-input course-item" type="checkbox" name="allowed_courses[]" value="${degreeName.replace(/"/g, '&quot;')}" id="${newId}" checked>
+        <label class="form-check-label small fw-semibold text-primary" for="${newId}">${degreeName}</label>
+    `;
+    container.appendChild(div);
+    input.value = '';
+}
+
+// Allow Enter key in degree input to trigger addition
+document.getElementById('newDegreeInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addNewDegree();
+    }
+});
+
+function handleQuickCompanySubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const submitBtn = document.getElementById('qc_submitBtn');
+    const spinner = document.getElementById('qc_spinner');
+    const alertBox = document.getElementById('companyAlertBox');
+    
+    submitBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    alertBox.classList.add('d-none');
+    
+    const formData = new FormData(form);
+    
+    fetch('<?= BASE_URL ?>/public/index.php?page=admin/company-save', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        submitBtn.disabled = false;
+        spinner.classList.add('d-none');
+        
+        if (data.status === 'success') {
+            // Add new option to company dropdown and select it
+            const select = document.getElementById('company_id');
+            const newOption = document.createElement('option');
+            newOption.value = data.company_id;
+            newOption.textContent = `${data.company_name} (${data.industry || 'Technology'})`;
+            newOption.selected = true;
+            select.appendChild(newOption);
+            
+            // Close modal
+            const modalEl = document.getElementById('quickAddCompanyModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            
+            form.reset();
+        } else {
+            alertBox.className = 'alert alert-danger py-2 px-3 small';
+            alertBox.textContent = data.message || 'Error creating company. Please try again.';
+            alertBox.classList.remove('d-none');
+        }
+    })
+    .catch(err => {
+        submitBtn.disabled = false;
+        spinner.classList.add('d-none');
+        alertBox.className = 'alert alert-danger py-2 px-3 small';
+        alertBox.textContent = 'Server request failed: ' + err.message;
+        alertBox.classList.remove('d-none');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const allBox = document.getElementById('course_all');
     if (allBox && allBox.checked) {
