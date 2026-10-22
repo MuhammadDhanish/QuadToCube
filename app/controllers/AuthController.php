@@ -10,7 +10,10 @@ require_once __DIR__ . '/../models/User.php';
 
 class AuthController {
     public static function showLogin(): void {
-        if (Auth::isLoggedIn()) {
+        if (isset($_GET['logged_out'])) {
+            Auth::logout();
+            setFlash('info', 'You have been logged out successfully.');
+        } elseif (Auth::isLoggedIn()) {
             if (Auth::isAdmin()) {
                 header('Location: ' . BASE_URL . '/public/index.php?page=admin/dashboard');
             } else {
@@ -150,8 +153,7 @@ class AuthController {
 
     public static function logout(): void {
         Auth::logout();
-        setFlash('info', 'You have been logged out successfully.');
-        header('Location: ' . BASE_URL . '/public/index.php?page=login');
+        header('Location: ' . BASE_URL . '/public/index.php?page=login&logged_out=1');
         exit;
     }
 }

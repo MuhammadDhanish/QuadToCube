@@ -82,13 +82,35 @@ class Auth {
 
     public static function logout(): void {
         $_SESSION = [];
+
+        // Clear standard PHP session cookie across all path variations
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 42000,
-                $params["path"], $params["domain"],
-                $params["secure"], $params["httponly"]
+            setcookie(session_name(), '', time() - 86400,
+                $params["path"] ?: '/', $params["domain"] ?? '',
+                $params["secure"] ?? false, $params["httponly"] ?? true
             );
+            setcookie(session_name(), '', time() - 86400, '/');
         }
-        session_destroy();
+
+        // Explicitly clear signed serverless session cookie
+        $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+            || (!empty($_SERVER['HTTP_HOST']) && (strpos((string)$_SERVER['HTTP_HOST'], '.vercel.app') !== false));
+
+        setcookie('crms_session_data', '', [
+            'expires' => time() - 86400,
+            'path' => '/',
+            'secure' => $isHttps,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+        setcookie('crms_session_data', '', time() - 86400, '/');
+        unset($_COOKIE['crms_session_data']);
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
     }
 }

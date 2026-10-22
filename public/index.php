@@ -11,7 +11,19 @@ require_once __DIR__ . '/../app/controllers/StudentController.php';
 require_once __DIR__ . '/../app/controllers/ApplicationController.php';
 require_once __DIR__ . '/../app/controllers/AdminController.php';
 
-$page = $_GET['page'] ?? 'home';
+$page = $_GET['page'] ?? null;
+if (!$page) {
+    $uriPath = trim((string)parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+    if ($uriPath === 'logout' || $uriPath === 'public/logout') {
+        $page = 'logout';
+    } elseif ($uriPath === 'login' || $uriPath === 'public/login') {
+        $page = 'login';
+    } elseif ($uriPath === 'register' || $uriPath === 'public/register') {
+        $page = 'register';
+    } else {
+        $page = 'home';
+    }
+}
 
 switch ($page) {
     // -----------------------------------------------------

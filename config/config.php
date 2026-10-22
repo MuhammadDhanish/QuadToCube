@@ -15,6 +15,11 @@ $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !
 define('CRMS_SECRET_KEY', getenv('APP_KEY') ?: 'crms-v1-secret-session-sign-key-2026-nit');
 
 function syncSessionFromCookie(): void {
+    // If request indicates logout or post-logout, never restore session
+    if ((isset($_GET['page']) && $_GET['page'] === 'logout') || isset($_GET['logged_out'])) {
+        return;
+    }
+
     if (!empty($_COOKIE['crms_session_data'])) {
         $parts = explode('.', (string)$_COOKIE['crms_session_data'], 2);
         if (count($parts) === 2) {
@@ -36,13 +41,13 @@ function syncSessionFromCookie(): void {
 }
 
 function syncSessionToCookie(): void {
-    if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+    if (!headers_sent()) {
         $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off')
             || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
             || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
             || (!empty($_SERVER['HTTP_HOST']) && (strpos((string)$_SERVER['HTTP_HOST'], '.vercel.app') !== false));
 
-        if (!empty($_SESSION)) {
+        if (!empty($_SESSION['user_id'])) {
             $payload = base64_encode(json_encode($_SESSION));
             $signature = hash_hmac('sha256', $payload, CRMS_SECRET_KEY);
             setcookie('crms_session_data', $payload . '.' . $signature, [
@@ -52,14 +57,16 @@ function syncSessionToCookie(): void {
                 'httponly' => true,
                 'samesite' => 'Lax'
             ]);
-        } elseif (isset($_COOKIE['crms_session_data'])) {
+        } else {
             setcookie('crms_session_data', '', [
-                'expires' => time() - 3600,
+                'expires' => time() - 86400,
                 'path' => '/',
                 'secure' => $isHttps,
                 'httponly' => true,
                 'samesite' => 'Lax'
             ]);
+            setcookie('crms_session_data', '', time() - 86400, '/');
+            unset($_COOKIE['crms_session_data']);
         }
     }
 }
