@@ -1,0 +1,9 @@
+.git
+.vscode
+.gemini
+docs
+*.md
+*.pptx
+*.pdf
+generate_*.py
+ppt_images/
