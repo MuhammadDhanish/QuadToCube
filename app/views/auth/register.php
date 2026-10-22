@@ -45,12 +45,20 @@ require_once __DIR__ . '/../layouts/header.php';
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label for="course" class="form-label fw-semibold">Degree / Branch <span class="text-danger">*</span></label>
-                            <select class="form-select" id="course" name="course" required>
+                            <select class="form-select" id="course" name="course" required onchange="handleCourseSelect(this)">
                                 <option value="">-- Select Degree / Branch --</option>
                                 <?php foreach (ALL_CRMS_COURSES as $code => $label): ?>
                                     <option value="<?= $code ?>"><?= $label ?></option>
                                 <?php endforeach; ?>
+                                <option value="__custom__">+ Other (Enter Custom Degree / Branch)</option>
                             </select>
+                            <div id="customCourseWrapper" class="mt-2 d-none">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white"><i class="bi bi-mortarboard-fill text-primary"></i></span>
+                                    <input type="text" id="customCourseInput" class="form-control" placeholder="Enter custom degree/branch (e.g. B.Tech Cyber Security)" onkeydown="if(event.key==='Enter'){event.preventDefault();applyCustomCourse();}">
+                                    <button type="button" class="btn btn-primary" onclick="applyCustomCourse()">Apply</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label for="semester" class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
@@ -104,7 +112,54 @@ require_once __DIR__ . '/../layouts/header.php';
 </div>
 
 <script>
+function handleCourseSelect(sel) {
+    const wrap = document.getElementById('customCourseWrapper');
+    if (sel.value === '__custom__') {
+        wrap.classList.remove('d-none');
+        document.getElementById('customCourseInput').focus();
+    } else {
+        wrap.classList.add('d-none');
+    }
+}
+
+function applyCustomCourse() {
+    const inp = document.getElementById('customCourseInput');
+    const val = inp.value.trim();
+    if (!val) {
+        inp.focus();
+        return;
+    }
+    const sel = document.getElementById('course');
+    let found = false;
+    for (let opt of sel.options) {
+        if (opt.value.toLowerCase() === val.toLowerCase()) {
+            opt.selected = true;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        const newOpt = new Option(val + ' (Custom)', val, true, true);
+        sel.add(newOpt, sel.options[sel.options.length - 1]);
+    }
+    document.getElementById('customCourseWrapper').classList.add('d-none');
+    inp.value = '';
+}
+
 document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const sel = document.getElementById('course');
+    if (sel.value === '__custom__') {
+        const customVal = document.getElementById('customCourseInput').value.trim();
+        if (customVal) {
+            applyCustomCourse();
+        } else {
+            e.preventDefault();
+            alert('Please enter your Degree / Branch name or select one from the list.');
+            document.getElementById('customCourseInput').focus();
+            return;
+        }
+    }
+
     const p1 = document.getElementById('password').value;
     const p2 = document.getElementById('confirm_password').value;
     if (p1 !== p2) {

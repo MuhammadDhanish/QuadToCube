@@ -75,14 +75,29 @@ $completeness = round(($fieldsFilled / $totalCheck) * 100);
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label for="course" class="form-label fw-semibold">Degree / Branch <span class="text-danger">*</span></label>
-                            <select class="form-select" id="course" name="course" required>
+                            <select class="form-select" id="course" name="course" required onchange="handleCourseSelect(this)">
                                 <?php 
                                 $courses = defined('ALL_CRMS_COURSES') ? ALL_CRMS_COURSES : ['B.Tech CSE' => 'B.Tech CSE'];
+                                $currentCourse = $student['course'] ?? '';
+                                $courseFound = false;
                                 foreach ($courses as $cCode => $cLabel): 
+                                    $isSelected = ($currentCourse === $cCode);
+                                    if ($isSelected) $courseFound = true;
                                 ?>
-                                    <option value="<?= $cCode ?>" <?= $student['course'] === $cCode ? 'selected' : '' ?>><?= $cLabel ?> (<?= $cCode ?>)</option>
+                                    <option value="<?= $cCode ?>" <?= $isSelected ? 'selected' : '' ?>><?= $cLabel ?> (<?= $cCode ?>)</option>
                                 <?php endforeach; ?>
+                                <?php if (!empty($currentCourse) && !$courseFound): ?>
+                                    <option value="<?= e($currentCourse) ?>" selected><?= e($currentCourse) ?> (Custom)</option>
+                                <?php endif; ?>
+                                <option value="__custom__">+ Other (Enter Custom Degree / Branch)</option>
                             </select>
+                            <div id="customCourseWrapper" class="mt-2 d-none">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white"><i class="bi bi-mortarboard-fill text-primary"></i></span>
+                                    <input type="text" id="customCourseInput" class="form-control" placeholder="Enter custom degree/branch (e.g. B.Arch, M.Sc Data Science)" onkeydown="if(event.key==='Enter'){event.preventDefault();applyCustomCourse();}">
+                                    <button type="button" class="btn btn-primary" onclick="applyCustomCourse()">Apply</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label for="semester" class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
@@ -127,5 +142,55 @@ $completeness = round(($fieldsFilled / $totalCheck) * 100);
         </div>
     </div>
 </div>
+
+<script>
+function handleCourseSelect(sel) {
+    const wrap = document.getElementById('customCourseWrapper');
+    if (sel.value === '__custom__') {
+        wrap.classList.remove('d-none');
+        document.getElementById('customCourseInput').focus();
+    } else {
+        wrap.classList.add('d-none');
+    }
+}
+
+function applyCustomCourse() {
+    const inp = document.getElementById('customCourseInput');
+    const val = inp.value.trim();
+    if (!val) {
+        inp.focus();
+        return;
+    }
+    const sel = document.getElementById('course');
+    let found = false;
+    for (let opt of sel.options) {
+        if (opt.value.toLowerCase() === val.toLowerCase()) {
+            opt.selected = true;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        const newOpt = new Option(val + ' (Custom)', val, true, true);
+        sel.add(newOpt, sel.options[sel.options.length - 1]);
+    }
+    document.getElementById('customCourseWrapper').classList.add('d-none');
+    inp.value = '';
+}
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    const sel = document.getElementById('course');
+    if (sel.value === '__custom__') {
+        const customVal = document.getElementById('customCourseInput').value.trim();
+        if (customVal) {
+            applyCustomCourse();
+        } else {
+            e.preventDefault();
+            alert('Please enter your Degree / Branch name or select one from the list.');
+            document.getElementById('customCourseInput').focus();
+        }
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>
