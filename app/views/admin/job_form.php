@@ -315,7 +315,7 @@ function handleQuickCompanySubmit(e) {
         submitBtn.disabled = false;
         spinner.classList.add('d-none');
         
-        if (data.status === 'success') {
+        if (data.success || data.status === 'success') {
             // Add new option to company dropdown and select it
             const select = document.getElementById('company_id');
             const newOption = document.createElement('option');
@@ -326,7 +326,7 @@ function handleQuickCompanySubmit(e) {
             
             // Close modal
             const modalEl = document.getElementById('quickAddCompanyModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
             if (modal) modal.hide();
             
             form.reset();
