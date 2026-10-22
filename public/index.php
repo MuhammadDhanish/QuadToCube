@@ -111,6 +111,7 @@ switch ($page) {
         AdminController::jobs();
         break;
 
+    case 'admin/job-create':
     case 'admin/job-form':
         AdminController::jobForm();
         break;
