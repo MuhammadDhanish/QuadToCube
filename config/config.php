@@ -78,6 +78,32 @@ define('APP_NAME', 'CRMS - Campus Recruitment Management System');
 define('APP_VERSION', '1.0.0');
 define('APP_INSTITUTION', 'National Institute of Technology & Engineering');
 
+// Comprehensive List of University Degrees & Engineering Branches
+define('ALL_CRMS_COURSES', [
+    'B.Tech CSE' => 'B.Tech Computer Science & Engg (CSE)',
+    'B.Tech IT' => 'B.Tech Information Technology (IT)',
+    'B.Tech AI & Data Science' => 'B.Tech Artificial Intelligence & Data Science',
+    'B.Tech AI & ML' => 'B.Tech AI & Machine Learning',
+    'B.Tech ECE' => 'B.Tech Electronics & Communication (ECE)',
+    'B.Tech EEE' => 'B.Tech Electrical & Electronics (EEE)',
+    'B.Tech Mechanical' => 'B.Tech Mechanical Engineering',
+    'B.Tech Civil' => 'B.Tech Civil Engineering',
+    'B.Tech Chemical' => 'B.Tech Chemical Engineering',
+    'B.Tech Aerospace' => 'B.Tech Aerospace Engineering',
+    'B.Tech Biotechnology' => 'B.Tech Biotechnology',
+    'B.Tech Robotics' => 'B.Tech Robotics & Automation',
+    'BCA' => 'Bachelor of Computer Applications (BCA)',
+    'MCA' => 'Master of Computer Applications (MCA)',
+    'B.Sc CS' => 'B.Sc Computer Science',
+    'B.Sc IT' => 'B.Sc Information Technology',
+    'M.Sc CS' => 'M.Sc Computer Science',
+    'M.Tech CSE' => 'M.Tech Computer Science & Engineering',
+    'M.Tech AI & DS' => 'M.Tech AI & Data Science',
+    'M.Tech VLSI' => 'M.Tech VLSI & Embedded Systems',
+    'BBA' => 'Bachelor of Business Administration (BBA)',
+    'MBA' => 'Master of Business Administration (MBA)'
+]);
+
 // Automatic BASE_URL detection (supports XAMPP, local PHP server, and Vercel serverless)
 if (getenv('BASE_URL')) {
     define('BASE_URL', rtrim(getenv('BASE_URL'), '/'));

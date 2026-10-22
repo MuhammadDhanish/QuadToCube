@@ -47,13 +47,9 @@ require_once __DIR__ . '/../layouts/header.php';
                             <label for="course" class="form-label fw-semibold">Degree / Branch <span class="text-danger">*</span></label>
                             <select class="form-select" id="course" name="course" required>
                                 <option value="">-- Select Degree / Branch --</option>
-                                <option value="B.Tech CSE">B.Tech Computer Science & Engg (CSE)</option>
-                                <option value="B.Tech IT">B.Tech Information Technology (IT)</option>
-                                <option value="B.Tech ECE">B.Tech Electronics & Comm (ECE)</option>
-                                <option value="B.Tech Mechanical">B.Tech Mechanical Engineering</option>
-                                <option value="B.Tech Civil">B.Tech Civil Engineering</option>
-                                <option value="MCA">Master of Computer Applications (MCA)</option>
-                                <option value="M.Tech CSE">M.Tech Computer Science</option>
+                                <?php foreach (ALL_CRMS_COURSES as $code => $label): ?>
+                                    <option value="<?= $code ?>"><?= $label ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-3">

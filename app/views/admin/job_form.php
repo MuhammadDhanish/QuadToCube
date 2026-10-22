@@ -6,8 +6,10 @@ require_once __DIR__ . '/../layouts/header.php';
 $allowedCoursesList = $isEdit ? array_map('trim', explode(',', $job['allowed_courses'])) : ['All'];
 $isAllCourses = in_array('All', $allowedCoursesList);
 
-$availableCourses = [
-    'B.Tech CSE', 'B.Tech IT', 'B.Tech ECE', 'B.Tech Mechanical', 'B.Tech Civil', 'MCA', 'M.Tech CSE'
+$availableCourses = defined('ALL_CRMS_COURSES') ? array_keys(ALL_CRMS_COURSES) : [
+    'B.Tech CSE', 'B.Tech IT', 'B.Tech AI & Data Science', 'B.Tech AI & ML', 'B.Tech ECE', 'B.Tech EEE', 
+    'B.Tech Mechanical', 'B.Tech Civil', 'B.Tech Chemical', 'B.Tech Aerospace', 'B.Tech Biotechnology', 
+    'B.Tech Robotics', 'BCA', 'MCA', 'B.Sc CS', 'B.Sc IT', 'M.Sc CS', 'M.Tech CSE', 'M.Tech AI & DS', 'M.Tech VLSI', 'BBA', 'MBA'
 ];
 ?>
 

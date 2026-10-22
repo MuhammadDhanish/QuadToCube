@@ -77,10 +77,10 @@ $completeness = round(($fieldsFilled / $totalCheck) * 100);
                             <label for="course" class="form-label fw-semibold">Degree / Branch <span class="text-danger">*</span></label>
                             <select class="form-select" id="course" name="course" required>
                                 <?php 
-                                $courses = ['B.Tech CSE', 'B.Tech IT', 'B.Tech ECE', 'B.Tech Mechanical', 'B.Tech Civil', 'MCA', 'M.Tech CSE'];
-                                foreach ($courses as $c): 
+                                $courses = defined('ALL_CRMS_COURSES') ? ALL_CRMS_COURSES : ['B.Tech CSE' => 'B.Tech CSE'];
+                                foreach ($courses as $cCode => $cLabel): 
                                 ?>
-                                    <option value="<?= $c ?>" <?= $student['course'] === $c ? 'selected' : '' ?>><?= $c ?></option>
+                                    <option value="<?= $cCode ?>" <?= $student['course'] === $cCode ? 'selected' : '' ?>><?= $cLabel ?> (<?= $cCode ?>)</option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

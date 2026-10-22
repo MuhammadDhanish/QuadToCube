@@ -66,6 +66,17 @@ class Database {
                     if ($check && $check->rowCount() === 0) {
                         self::autoMigrate(self::$instance);
                     }
+                    // Ensure partner companies are fully populated (20+ companies)
+                    $cCount = (int)self::$instance->query("SELECT count(*) FROM companies")->fetchColumn();
+                    if ($cCount < 20) {
+                        $seedFile = __DIR__ . '/../database/seed.sql';
+                        if (file_exists($seedFile)) {
+                            $seedSql = file_get_contents($seedFile);
+                            if (preg_match('/INSERT INTO `companies`.*?;/s', $seedSql, $match)) {
+                                self::$instance->exec($match[0]);
+                            }
+                        }
+                    }
                 } catch (Exception $migrateErr) {
                     // Silent catch if inspection fails
                 }
